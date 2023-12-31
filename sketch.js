@@ -2,7 +2,7 @@ let video;
 let handPoseNet;
 let pose = [];
 let predictions = [];
-let nn;
+let brain;
 let currentState = "waiting";
 let targetLabel = null;
 
@@ -22,19 +22,7 @@ function isvalidKey(pressedKey) {
 function displayResult(result) {
   const res = document.getElementById("res");
   const confidence = document.getElementById("confidence");
-    const gestureMapping = {
-      A: "closed palm",
-      B: " B",
-      C: "C",
-      D: "D",
-      // Add more mappings as needed
-    };
-
-    // Get the gesture corresponding to the label
-  const gesture = gestureMapping[result[0].label];
-   console.log(result[0].label)
-
-  res.innerHTML = gesture || result[0].label;
+  res.innerHTML = result[0].label;
   let score = (result[0].confidence * 100).toFixed(2);
 
   let confidenceStr = score.toString() + " %";
@@ -48,7 +36,7 @@ function keyPressed() {
   targetLabel = isvalidKey(pressedKey) ? pressedKey : null;
   // save collected data if 's' is pressed
   if (targetLabel === "s" || targetLabel === "S") {
-    nn.saveData();
+    brain.saveData();
   } else if (targetLabel) {
     console.log("Collecting");
     console.log(targetLabel);
@@ -69,20 +57,20 @@ function modelLoaded() {
 
 function trainModel() {
   // console.log("loading data");
-  // console.log(nn.data);
-  // nn.loadData("gestures.json", beginTraining());
+  // console.log(brain.data);
+  // brain.loadData("gestures.json", beginTraining());
   // beginTraining();
 }
 
 function beginTraining() {
   console.log("Training started");
-  nn.normalizeData();
-  nn.train({ epochs: 50 }, finishTrain);
+  brain.normalizeData();
+  brain.train({ epochs: 50 }, finishTrain);
 }
 
 function finishTrain() {
   console.log("train finished");
-  nn.save();
+  brain.save();
 }
 
 function setup() {
@@ -104,25 +92,34 @@ function setup() {
 
   const options = {
     inputs: 21 * 3,
-    outputs: 4,
+    outputs: 10,
     task: "classification",
     debug: true,
   };
 
-  const modelInfo = {
-    model: "model/model.json",
-    metadata: "model/model_meta.json",
-    weights: "model/model.weights.bin",
-  };
+  // const modelInfo = {
+  //   model: "model/model.json",
+  //   metadata: "model/model_meta.json",
+  //   weights: "model/model.weights.bin",
+  // };
 
-  nn = ml5.neuralNetwork(options); // initialize dense neural network
-  nn.load(modelInfo, nnLoaded);
+  brain = ml5.neuralNetwork(options); // initialize dense neural network
+  // brain.load(modelInfo, brainLoaded);
+  brain.loadData('sign10.json',dataReady)
 
   cnv.id("mycanvas");
   cnv.parent("canvasContainer");
 }
-
-function nnLoaded() {
+function dataReady(){
+  brain.normalizeData();
+  brain.train({epochs:20},finished)
+  console.log('data is ready')
+}
+function finished(){
+console.log('model trained')
+brain.save();
+}
+function brainLoaded() {
   console.log("Dense Model loaded");
   classifyGesture();
 }
@@ -140,7 +137,7 @@ function classifyGesture() {
       inputs.push(y);
       inputs.push(z);
     }
-    nn.classify(inputs, gotResults);
+    brain.classify(inputs, gotResults);
   } else {
     setTimeout(classifyGesture, 100);
   }
@@ -170,7 +167,7 @@ function gotHandPoses(result) {
         inputs.push(z);
       }
       let target = [targetLabel];
-      nn.addData(inputs, target); // Add the data to neural network raw array
+      brain.addData(inputs, target); // Add the data to neural network raw array
     }
   }
 }
