@@ -20,21 +20,26 @@ function isvalidKey(pressedKey) {
 }
 
 function displayResult(result) {
-  const res = document.getElementById("res");
-  const confidence = document.getElementById("confidence");
-    const gestureMapping = {
-      A: "closed palm",
-      B: " B",
-      C: "C",
-      D: "D",
-      // Add more mappings as needed
-    };
-
-    // Get the gesture corresponding to the label
+  const gestureMapping = {
+    A: "Hello",
+    B: "Power",
+    C: "ok",
+    D: "Peace",
+    E: "Thumps up",
+    F: "Thump down",
+    G: "I love you",
+    H: "rock",
+    I: "call me",
+    J: "Bang bang",
+  };
+  console.log(result[0].label)
+  // Get the gesture corresponding to the label
   const gesture = gestureMapping[result[0].label];
-   console.log(result[0].label)
 
   res.innerHTML = gesture || result[0].label;
+  // const res = document.getElementById("res");
+  const confidence = document.getElementById("confidence");
+  // res.innerHTML = result[0].label;
   let score = (result[0].confidence * 100).toFixed(2);
 
   let confidenceStr = score.toString() + " %";
@@ -96,7 +101,7 @@ function setup() {
   // handPoseNet.on("predict", gotHandPoses);
   handPoseNet.on("predict", (results) => {
     predictions = results;
-    // console.log(results);
+    console.log(results);
     gotHandPoses(results);
   });
 
@@ -104,7 +109,7 @@ function setup() {
 
   const options = {
     inputs: 21 * 3,
-    outputs: 4,
+    outputs: 10,
     task: "classification",
     debug: true,
   };
@@ -141,6 +146,7 @@ function classifyGesture() {
       inputs.push(z);
     }
     nn.classify(inputs, gotResults);
+    // console.log(gotResults)
   } else {
     setTimeout(classifyGesture, 100);
   }
@@ -149,6 +155,7 @@ function classifyGesture() {
 function gotResults(err, results) {
   // console.log("label: ", results[0].label);
   poseLabel = results[0].label;
+  // console.log(results)
   displayResult(results);
   classifyGesture();
 }
